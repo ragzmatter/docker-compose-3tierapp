@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Tier 3: Database
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: my_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Tier 2: Backend (Simple Python API Simulator)
+  backend:
+    image: python:3.9-slim
+    container_name: backend_api
+    command: python3 -m http.server 8000
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://myuser:mypassword@db:5432/my_database
+
+  # Tier 1: Frontend (Nginx Web Server)
+  frontend:
+    image: nginx:alpine
+    container_name: frontend_web
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
